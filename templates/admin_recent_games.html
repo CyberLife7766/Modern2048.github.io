@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 - 最近游戏记录</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #faf8ef;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #bbada0;
+        }
+        .dashboard-title {
+            color: #776e65;
+            margin: 0;
+        }
+        .nav-button {
+            padding: 8px 15px;
+            background-color: #8f7a66;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+        .nav-button:hover {
+            background-color: #9f8b77;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #bbada0;
+        }
+        th {
+            background-color: #bbada0;
+            color: white;
+            cursor: pointer;
+        }
+        th:hover {
+            background-color: #a09080;
+        }
+        tr:nth-child(even) {
+            background-color: #eee4da;
+        }
+        .section-title {
+            color: #776e65;
+            margin: 20px 0 10px 0;
+        }
+        .nav-container {
+            display: flex;
+            gap: 10px;
+        }
+        .id-tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .id-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 300px;
+            background-color: #776e65;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -150px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .id-tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #776e65 transparent transparent transparent;
+        }
+        .id-tooltip.show .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .show-id-btn {
+            background-color: #8f7a66;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 5px;
+            margin-left: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .show-id-btn:hover {
+            background-color: #9f8b77;
+        }
+        .filter-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .filter-label {
+            color: #776e65;
+            font-weight: bold;
+        }
+        .filter-select {
+            padding: 8px;
+            border: 1px solid #bbada0;
+            border-radius: 5px;
+            background-color: #f9f6f2;
+        }
+        .sort-icon::after {
+            content: "↕";
+            margin-left: 5px;
+            font-size: 12px;
+        }
+        .sort-asc::after {
+            content: "↑";
+        }
+        .sort-desc::after {
+            content: "↓";
+        }
+        .high-score {
+            font-weight: bold;
+            color: #f65e3b;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">2048 最近游戏记录</h1>
+            <div class="nav-container">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-button">仪表盘</a>
+                <a href="{{ url_for('admin_overall_stats') }}" class="nav-button">总体统计</a>
+                <a href="{{ url_for('admin_device_stats') }}" class="nav-button">设备统计</a>
+                <a href="{{ url_for('admin_logout') }}" class="nav-button">退出</a>
+            </div>
+        </div>
+        
+        <!-- 筛选器 -->
+        <div class="filter-container">
+            <div>
+                <span class="filter-label">棋盘尺寸:</span>
+                <select id="boardSizeFilter" class="filter-select">
+                    <option value="all">全部</option>
+                    <option value="3">3x3</option>
+                    <option value="4">4x4</option>
+                    <option value="5">5x5</option>
+                    <option value="6">6x6</option>
+                </select>
+            </div>
+            <div>
+                <span class="filter-label">目标值:</span>
+                <select id="targetTileFilter" class="filter-select">
+                    <option value="all">全部</option>
+                    <option value="1024">1024</option>
+                    <option value="2048">2048</option>
+                    <option value="4096">4096</option>
+                    <option value="8192">8192</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- 游戏记录表格 -->
+        <h2 class="section-title">最近50场游戏记录</h2>
+        <table id="gamesTable">
+            <thead>
+                <tr>
+                    <th data-sort="device_id" class="sort-icon">设备ID</th>
+                    <th data-sort="score" class="sort-icon">分数</th>
+                    <th data-sort="board_size" class="sort-icon">棋盘尺寸</th>
+                    <th data-sort="target_tile" class="sort-icon">目标值</th>
+                    <th data-sort="timestamp" class="sort-icon sort-desc">时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in recent_games %}
+                <tr data-board-size="{{ game.board_size }}" data-target-tile="{{ game.target_tile }}">
+                    <td class="id-tooltip" data-id="{{ game.device_id }}">
+                        {{ game.device_id[:8] }}...
+                        <button class="show-id-btn">显示</button>
+                        <span class="tooltip-text">{{ game.device_id }}</span>
+                    </td>
+                    <td class="{% if game.score > 10000 %}high-score{% endif %}">{{ game.score }}</td>
+                    <td>{{ game.board_size }}x{{ game.board_size }}</td>
+                    <td>{{ game.target_tile }}</td>
+                    <td>{{ game.timestamp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{{ url_for('index') }}" style="color: #776e65; text-decoration: none;">返回游戏</a>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设备ID显示功能
+            const showButtons = document.querySelectorAll('.show-id-btn');
+            
+            showButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tooltip = this.parentElement;
+                    
+                    // 移除所有其他工具提示的显示状态
+                    document.querySelectorAll('.id-tooltip').forEach(tip => {
+                        if (tip !== tooltip) {
+                            tip.classList.remove('show');
+                        }
+                    });
+                    
+                    // 切换当前工具提示的显示状态
+                    tooltip.classList.toggle('show');
+                    
+                    // 3秒后自动隐藏
+                    setTimeout(() => {
+                        tooltip.classList.remove('show');
+                    }, 3000);
+                });
+            });
+            
+            // 点击页面其他地方关闭所有工具提示
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.id-tooltip')) {
+                    document.querySelectorAll('.id-tooltip').forEach(tip => {
+                        tip.classList.remove('show');
+                    });
+                }
+            }, true);
+            
+            // 筛选功能
+            const boardSizeFilter = document.getElementById('boardSizeFilter');
+            const targetTileFilter = document.getElementById('targetTileFilter');
+            const tableRows = document.querySelectorAll('#gamesTable tbody tr');
+            
+            function applyFilters() {
+                const boardSize = boardSizeFilter.value;
+                const targetTile = targetTileFilter.value;
+                
+                tableRows.forEach(row => {
+                    const rowBoardSize = row.getAttribute('data-board-size');
+                    const rowTargetTile = row.getAttribute('data-target-tile');
+                    
+                    const boardSizeMatch = boardSize === 'all' || rowBoardSize === boardSize;
+                    const targetTileMatch = targetTile === 'all' || rowTargetTile === targetTile;
+                    
+                    if (boardSizeMatch && targetTileMatch) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+            
+            boardSizeFilter.addEventListener('change', applyFilters);
+            targetTileFilter.addEventListener('change', applyFilters);
+            
+            // 排序功能
+            const sortHeaders = document.querySelectorAll('th[data-sort]');
+            let currentSort = {
+                column: 'timestamp',
+                direction: 'desc'
+            };
+            
+            sortHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const column = this.getAttribute('data-sort');
+                    
+                    // 更新排序方向
+                    if (currentSort.column === column) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.column = column;
+                        currentSort.direction = 'asc';
+                    }
+                    
+                    // 更新排序图标
+                    sortHeaders.forEach(h => {
+                        h.classList.remove('sort-asc', 'sort-desc');
+                        h.classList.add('sort-icon');
+                    });
+                    
+                    this.classList.remove('sort-icon');
+                    this.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+                    
+                    // 执行排序
+                    sortTable(column, currentSort.direction);
+                });
+            });
+            
+            function sortTable(column, direction) {
+                const tbody = document.querySelector('#gamesTable tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                
+                rows.sort((a, b) => {
+                    let valueA, valueB;
+                    
+                    if (column === 'device_id') {
+                        valueA = a.querySelector('.id-tooltip').getAttribute('data-id');
+                        valueB = b.querySelector('.id-tooltip').getAttribute('data-id');
+                    } else if (column === 'score' || column === 'board_size' || column === 'target_tile') {
+                        if (column === 'board_size') {
+                            valueA = parseInt(a.getAttribute('data-board-size'));
+                            valueB = parseInt(b.getAttribute('data-board-size'));
+                        } else if (column === 'target_tile') {
+                            valueA = parseInt(a.getAttribute('data-target-tile'));
+                            valueB = parseInt(b.getAttribute('data-target-tile'));
+                        } else {
+                            valueA = parseInt(a.querySelector('td:nth-child(2)').textContent);
+                            valueB = parseInt(b.querySelector('td:nth-child(2)').textContent);
+                        }
+                    } else if (column === 'timestamp') {
+                        valueA = a.querySelector('td:nth-child(5)').textContent;
+                        valueB = b.querySelector('td:nth-child(5)').textContent;
+                    }
+                    
+                    if (direction === 'asc') {
+                        return valueA > valueB ? 1 : -1;
+                    } else {
+                        return valueA < valueB ? 1 : -1;
+                    }
+                });
+                
+                // 重新排列表格行
+                rows.forEach(row => {
+                    tbody.appendChild(row);
+                });
+            }
+            
+            // 初始化排序状态
+            document.querySelector('th[data-sort="timestamp"]').classList.remove('sort-icon');
+            document.querySelector('th[data-sort="timestamp"]').classList.add('sort-desc');
+        });
+    </script>
+</body>
+</html>

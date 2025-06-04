@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 - 管理员登录</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .admin-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            background-color: #faf8ef;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .admin-title {
+            text-align: center;
+            color: #776e65;
+            margin-bottom: 20px;
+        }
+        .admin-form {
+            display: flex;
+            flex-direction: column;
+        }
+        .admin-input {
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #bbada0;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .admin-button {
+            padding: 10px;
+            background-color: #8f7a66;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .admin-button:hover {
+            background-color: #9f8b77;
+        }
+        .flash-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1 class="admin-title">2048 管理后台</h1>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form class="admin-form" method="POST" action="{{ url_for('admin_login') }}">
+            <input type="password" name="admin_code" class="admin-input" placeholder="请输入管理码" required>
+            <button type="submit" class="admin-button">登录</button>
+        </form>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{{ url_for('index') }}" style="color: #776e65; text-decoration: none;">返回游戏</a>
+        </div>
+    </div>
+</body>
+</html>

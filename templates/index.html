@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="game-container">
+            <div class="game-header">
+                <h1 class="game-title">2048</h1>
+                <div class="score-container">
+                    <span id="score-label">Score</span>: <span id="score">0</span>
+                </div>
+            </div>
+            <div id="game-grid" class="game-grid"></div>
+        </div>
+        <div class="game-controls">
+            <div class="button-group">
+                <div class="mode-toggle-container">
+                    <button id="mode-toggle-button" class="mode-toggle-button">
+                        <span class="icon"></span>
+                    </button>
+                </div>
+                <button id="reset-button">
+                    <span class="icon"></span>
+                </button>
+                <div class="settings-button-container">
+                    <button id="settings-button" class="settings-button">
+                        <span class="icon"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='language.js') }}"></script>
+</body>
+</html>

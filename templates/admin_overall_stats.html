@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 - 总体统计</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #faf8ef;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #bbada0;
+        }
+        .dashboard-title {
+            color: #776e65;
+            margin: 0;
+        }
+        .nav-button {
+            padding: 8px 15px;
+            background-color: #8f7a66;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+        .nav-button:hover {
+            background-color: #9f8b77;
+        }
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            flex: 1;
+            min-width: 200px;
+            background-color: #eee4da;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #776e65;
+        }
+        .stat-label {
+            color: #776e65;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #bbada0;
+        }
+        th {
+            background-color: #bbada0;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #eee4da;
+        }
+        .section-title {
+            color: #776e65;
+            margin: 20px 0 10px 0;
+        }
+        .nav-container {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">2048 总体统计</h1>
+            <div class="nav-container">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-button">仪表盘</a>
+                <a href="{{ url_for('admin_device_stats') }}" class="nav-button">设备统计</a>
+                <a href="{{ url_for('admin_recent_games') }}" class="nav-button">游戏记录</a>
+                <a href="{{ url_for('admin_logout') }}" class="nav-button">退出</a>
+            </div>
+        </div>
+        
+        <!-- 总体统计卡片 -->
+        <h2 class="section-title">核心数据</h2>
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.total_games }}</div>
+                <div class="stat-label">总游戏局数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.highest_score }}</div>
+                <div class="stat-label">最高分数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.average_score|default(0, true)|round|int }}</div>
+                <div class="stat-label">平均分数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.unique_devices }}</div>
+                <div class="stat-label">独立设备数</div>
+            </div>
+        </div>
+        
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.avg_board_size|default(0, true)|round(1) }}</div>
+                <div class="stat-label">平均棋盘尺寸</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.min_board_size }}x{{ stats.min_board_size }}</div>
+                <div class="stat-label">最小棋盘尺寸</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.max_board_size }}x{{ stats.max_board_size }}</div>
+                <div class="stat-label">最大棋盘尺寸</div>
+            </div>
+        </div>
+        
+        <!-- 按月统计 -->
+        <h2 class="section-title">按月统计</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>月份</th>
+                    <th>游戏局数</th>
+                    <th>平均分数</th>
+                    <th>最高分数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in monthly_stats %}
+                <tr>
+                    <td>{{ stat.month }}</td>
+                    <td>{{ stat.games_count }}</td>
+                    <td>{{ stat.avg_score|default(0, true)|round|int }}</td>
+                    <td>{{ stat.max_score }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{{ url_for('index') }}" style="color: #776e65; text-decoration: none;">返回游戏</a>
+        </div>
+    </div>
+</body>
+</html>

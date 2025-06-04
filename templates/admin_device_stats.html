@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 - 设备统计</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #faf8ef;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #bbada0;
+        }
+        .dashboard-title {
+            color: #776e65;
+            margin: 0;
+        }
+        .nav-button {
+            padding: 8px 15px;
+            background-color: #8f7a66;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+        .nav-button:hover {
+            background-color: #9f8b77;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #bbada0;
+        }
+        th {
+            background-color: #bbada0;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #eee4da;
+        }
+        .section-title {
+            color: #776e65;
+            margin: 20px 0 10px 0;
+        }
+        .nav-container {
+            display: flex;
+            gap: 10px;
+        }
+        .id-tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .id-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 300px;
+            background-color: #776e65;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -150px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .id-tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #776e65 transparent transparent transparent;
+        }
+        .id-tooltip.show .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .show-id-btn {
+            background-color: #8f7a66;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 5px;
+            margin-left: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .show-id-btn:hover {
+            background-color: #9f8b77;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .search-input {
+            padding: 8px;
+            width: 300px;
+            border: 1px solid #bbada0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .search-button {
+            padding: 8px 15px;
+            background-color: #8f7a66;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">2048 设备统计</h1>
+            <div class="nav-container">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-button">仪表盘</a>
+                <a href="{{ url_for('admin_overall_stats') }}" class="nav-button">总体统计</a>
+                <a href="{{ url_for('admin_recent_games') }}" class="nav-button">游戏记录</a>
+                <a href="{{ url_for('admin_logout') }}" class="nav-button">退出</a>
+            </div>
+        </div>
+        
+        <!-- 搜索和筛选框 -->
+        <div class="search-container">
+            <input type="text" id="deviceSearch" class="search-input" placeholder="搜索设备ID...">
+            <button id="searchButton" class="search-button">搜索</button>
+        </div>
+        
+        <div class="filter-container">
+            <div>
+                <span class="filter-label">按国家筛选:</span>
+                <select id="countryFilter" class="filter-select">
+                    <option value="all">全部</option>
+                    <!-- 使用JavaScript动态填充国家列表 -->
+                </select>
+            </div>
+            <div>
+                <span class="filter-label">按系统筛选:</span>
+                <select id="osFilter" class="filter-select">
+                    <option value="all">全部</option>
+                    <!-- 使用JavaScript动态填充系统列表 -->
+                </select>
+            </div>
+            <div>
+                <span class="filter-label">按浏览器筛选:</span>
+                <select id="browserFilter" class="filter-select">
+                    <option value="all">全部</option>
+                    <!-- 使用JavaScript动态填充浏览器列表 -->
+                </select>
+            </div>
+        </div>
+        
+        <!-- 设备统计表格 -->
+        <h2 class="section-title">设备统计（按游戏局数排序）</h2>
+        <table id="deviceTable">
+            <thead>
+                <tr>
+                    <th>设备ID</th>
+                    <th>所在地</th>
+                    <th>操作系统</th>
+                    <th>浏览器</th>
+                    <th>游戏局数</th>
+                    <th>最高分数</th>
+                    <th>平均分数</th>
+                    <th>最后游戏时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for device in devices %}
+                <tr>
+                    <td class="id-tooltip" data-id="{{ device.device_id }}">
+                        {{ device.device_id[:8] }}...
+                        <button class="show-id-btn">显示</button>
+                        <span class="tooltip-text">{{ device.device_id }}</span>
+                    </td>
+                    <td>
+                        {% if device.country and device.region %}
+                            {{ device.country }} - {{ device.region }}
+                        {% elif device.country %}
+                            {{ device.country }}
+                        {% elif device.region %}
+                            {{ device.region }}
+                        {% else %}
+                            未知
+                        {% endif %}
+                    </td>
+                    <td>{{ device.os or '未知' }}</td>
+                    <td>{{ device.browser or '未知' }}</td>
+                    <td>{{ device.total_games }}</td>
+                    <td>{{ device.max_score }}</td>
+                    <td>{{ device.avg_score|default(0, true)|round|int }}</td>
+                    <td>{{ device.last_played }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{{ url_for('index') }}" style="color: #776e65; text-decoration: none;">返回游戏</a>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设备ID显示功能
+            const showButtons = document.querySelectorAll('.show-id-btn');
+            
+            showButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tooltip = this.parentElement;
+                    
+                    // 移除所有其他工具提示的显示状态
+                    document.querySelectorAll('.id-tooltip').forEach(tip => {
+                        if (tip !== tooltip) {
+                            tip.classList.remove('show');
+                        }
+                    });
+                    
+                    // 切换当前工具提示的显示状态
+                    tooltip.classList.toggle('show');
+                    
+                    // 3秒后自动隐藏
+                    setTimeout(() => {
+                        tooltip.classList.remove('show');
+                    }, 3000);
+                });
+            });
+            
+            // 点击页面其他地方关闭所有工具提示
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.id-tooltip')) {
+                    document.querySelectorAll('.id-tooltip').forEach(tip => {
+                        tip.classList.remove('show');
+                    });
+                }
+            }, true);
+            
+            // 搜索和筛选功能
+            const searchInput = document.getElementById('deviceSearch');
+            const searchButton = document.getElementById('searchButton');
+            const countryFilter = document.getElementById('countryFilter');
+            const osFilter = document.getElementById('osFilter');
+            const browserFilter = document.getElementById('browserFilter');
+            const table = document.getElementById('deviceTable');
+            const rows = table.getElementsByTagName('tr');
+            
+            // 收集唯一的国家、系统和浏览器
+            const countries = new Set();
+            const osList = new Set();
+            const browsers = new Set();
+            
+            // 从表格中提取唯一值
+            for (let i = 1; i < rows.length; i++) {
+                const countryCell = rows[i].cells[1].textContent.trim();
+                const osCell = rows[i].cells[2].textContent.trim();
+                const browserCell = rows[i].cells[3].textContent.trim();
+                
+                if (countryCell && countryCell !== '未知') countries.add(countryCell);
+                if (osCell && osCell !== '未知') {
+                    // 只使用系统名称，不包括版本
+                    const osName = osCell.split(' ')[0];
+                    osList.add(osName);
+                }
+                if (browserCell && browserCell !== '未知') {
+                    // 只使用浏览器名称，不包括版本
+                    const browserName = browserCell.split(' ')[0];
+                    browsers.add(browserName);
+                }
+            }
+            
+            // 填充筛选器
+            countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                countryFilter.appendChild(option);
+            });
+            
+            osList.forEach(os => {
+                const option = document.createElement('option');
+                option.value = os;
+                option.textContent = os;
+                osFilter.appendChild(option);
+            });
+            
+            browsers.forEach(browser => {
+                const option = document.createElement('option');
+                option.value = browser;
+                option.textContent = browser;
+                browserFilter.appendChild(option);
+            });
+            
+            function filterDevices() {
+                const searchText = searchInput.value.toLowerCase();
+                const selectedCountry = countryFilter.value;
+                const selectedOS = osFilter.value;
+                const selectedBrowser = browserFilter.value;
+                
+                for (let i = 1; i < rows.length; i++) {
+                    const deviceId = rows[i].querySelector('.id-tooltip').getAttribute('data-id').toLowerCase();
+                    const country = rows[i].cells[1].textContent.trim();
+                    const os = rows[i].cells[2].textContent.trim();
+                    const browser = rows[i].cells[3].textContent.trim();
+                    
+                    const matchesSearch = deviceId.includes(searchText);
+                    const matchesCountry = selectedCountry === 'all' || country.includes(selectedCountry);
+                    const matchesOS = selectedOS === 'all' || os.startsWith(selectedOS);
+                    const matchesBrowser = selectedBrowser === 'all' || browser.startsWith(selectedBrowser);
+                    
+                    if (matchesSearch && matchesCountry && matchesOS && matchesBrowser) {
+                        rows[i].style.display = '';
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+            }
+            
+            searchButton.addEventListener('click', filterDevices);
+            searchInput.addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    filterDevices();
+                }
+            });
+            
+            countryFilter.addEventListener('change', filterDevices);
+            osFilter.addEventListener('change', filterDevices);
+            browserFilter.addEventListener('change', filterDevices);
+        });
+    </script>
+</body>
+</html>

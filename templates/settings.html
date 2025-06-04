@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="{{ 'dark-mode' if dark_mode else '' }}">
+    <div class="settings-container">
+        <h1 id="settings-title">设置</h1>
+        <div class="setting-item">
+            <span data-key="darkModeLabel">黑白模式</span>
+            <label class="switch">
+                <input type="checkbox" id="mode-toggle-checkbox">
+                <span class="slider round"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <span data-key="languageLabel">语言</span>
+            <select id="language-select" class="language-select">
+                <option value="zh">中文</option>
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+                <option value="de">Deutsch</option>
+                <option value="fr">Français</option>
+                <option value="ru">Русский</option>
+            </select>
+        </div>
+
+        <div class="setting-item">
+            <span data-key="gameModeLabel">游戏模式</span>
+            <select id="game-mode-select" class="language-select">
+                <option value="2048">2048</option>
+                <option value="4096">4096</option>
+                <option value="8192">8192</option>
+            </select>
+        </div>
+
+        <div class="setting-item">
+            <span data-key="boardSizeLabel">棋盘尺寸</span>
+            <select id="board-size-select" class="language-select">
+                <option value="4">4x4</option>
+                <option value="5">5x5</option>
+                <option value="6">6x6</option>
+                <option value="7">7x7</option>
+                <option value="8">8x8</option>
+                <option value="9">9x9</option>
+            </select>
+        </div>
+        <button id="back-button" class="back-button" data-key="backButton">返回游戏</button>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='language.js') }}"></script>
+    <script src="{{ url_for('static', filename='settings.js') }}"></script>
+</body>
+</html>
